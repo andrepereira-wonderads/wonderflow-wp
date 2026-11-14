@@ -63,6 +63,7 @@ class Wonderflow_Whatsapp {
 			'type' => 'whatsapp_click',
 			'ref'  => $ref,
 		);
+
 		$first = Wonderflow_Attribution::sanitize( isset( $data['first_touch'] ) ? $data['first_touch'] : null );
 		if ( ! $first ) {
 			$first = Wonderflow_Attribution::current()['first'];

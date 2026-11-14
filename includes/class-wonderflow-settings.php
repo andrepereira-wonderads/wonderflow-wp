@@ -75,7 +75,7 @@ class Wonderflow_Settings {
 		$input   = is_array( $input ) ? $input : array();
 		$out     = self::defaults();
 
-		$endpoint = isset( $input['endpoint'] ) ? esc_url_raw( trim( $input['endpoint'] ), array( 'https' ) ) : '';
+		$endpoint        = isset( $input['endpoint'] ) ? esc_url_raw( trim( $input['endpoint'] ), array( 'https' ) ) : '';
 		$out['endpoint'] = untrailingslashit( $endpoint );
 
 		$key = isset( $input['server_key'] ) ? trim( sanitize_text_field( $input['server_key'] ) ) : '';

@@ -93,7 +93,7 @@ class Wonderflow_Queue {
 	 */
 	public static function cron_schedules( $schedules ) {
 		$schedules['wonderflow_5min'] = array(
-			'interval' => 5 * MINUTE_IN_SECONDS,
+			'interval' => 5 * MINUTE_IN_SECONDS, // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- retries need minutes.
 			'display'  => 'Wonderflow: every 5 minutes',
 		);
 		return $schedules;
