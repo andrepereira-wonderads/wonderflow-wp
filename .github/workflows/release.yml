@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ["7.4", "8.3"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - name: PHP syntax
+        run: find . -name "*.php" -not -path "./vendor/*" -print0 | xargs -0 -n1 php -l > /dev/null
+      - name: JavaScript syntax
+        run: node --check assets/wonderflow.js
+
+  phpcs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer
+      - run: composer install --no-progress
+      - run: composer lint
+
+  zip:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [syntax, phpcs]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the version matches the tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          grep -q "Version:           $tag" wonderflow.php
+          grep -q "Stable tag: $tag" readme.txt
+      - name: Build the zip
+        run: |
+          mkdir -p build/wonderflow
+          rsync -a --exclude-from=.distignore ./ build/wonderflow/
+          cd build && zip -qr "wonderflow-${GITHUB_REF_NAME}.zip" wonderflow
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: build/wonderflow-${{ github.ref_name }}.zip

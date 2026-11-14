@@ -1,0 +1,12 @@
+.git
+.github
+.gitignore
+.distignore
+.wp-env.json
+composer.json
+composer.lock
+phpcs.xml.dist
+vendor
+build
+docs
+README.md
