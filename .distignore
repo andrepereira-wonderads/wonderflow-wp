@@ -10,3 +10,4 @@ vendor
 build
 docs
 README.md
+.gitattributes
