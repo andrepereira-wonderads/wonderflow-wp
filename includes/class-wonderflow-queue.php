@@ -75,7 +75,7 @@ class Wonderflow_Queue {
 	 * Hooks.
 	 */
 	public static function init() {
-		add_filter( 'cron_schedules', array( __CLASS__, 'cron_schedules' ) );
+		add_filter( 'cron_schedules', array( __CLASS__, 'cron_schedules' ) ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- retries need minutes.
 		add_action( self::CRON_HOOK, array( __CLASS__, 'process' ) );
 		add_action( self::CRON_HOOK . '_now', array( __CLASS__, 'process' ) );
 		add_action( self::CLEANUP_HOOK, array( __CLASS__, 'cleanup' ) );
@@ -93,7 +93,7 @@ class Wonderflow_Queue {
 	 */
 	public static function cron_schedules( $schedules ) {
 		$schedules['wonderflow_5min'] = array(
-			'interval' => 5 * MINUTE_IN_SECONDS, // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- retries need minutes.
+			'interval' => 5 * MINUTE_IN_SECONDS,
 			'display'  => 'Wonderflow: every 5 minutes',
 		);
 		return $schedules;
