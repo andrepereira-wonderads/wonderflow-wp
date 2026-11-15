@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Wonderflow
  * Description:       Sends the clinic website's forms and WhatsApp clicks to the Wonderflow CRM, with the origin of each visit.
- * Version:           0.1.1
+ * Version:           0.2.0
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            WonderAds
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WONDERFLOW_VERSION', '0.1.1' );
+define( 'WONDERFLOW_VERSION', '0.2.0' );
 define( 'WONDERFLOW_FILE', __FILE__ );
 define( 'WONDERFLOW_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WONDERFLOW_URL', plugin_dir_url( __FILE__ ) );

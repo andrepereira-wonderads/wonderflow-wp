@@ -37,6 +37,15 @@ to those URLs (Joinchat, Click to Chat). Group invites (`chat.whatsapp.com`) are
 alone. When a number is set, only links to it get a Ref. A link with a message keeps it
 and gets ` Ref XXXXX` at the end; a link without one gets the configured message.
 
+### Ref codes
+
+`<channel letter><4 random characters>`, from `23456789ABCDEFGHJKMNPQRSTUVWXYZ`. The letter
+follows the CRM rule (`public.classify_channel`) on the first origin of the visit, or the
+current page when nothing is stored: D direct, G organic search, P paid search,
+R organic social, M paid social, A AI assistant, E email, W referral (other site), X other.
+The CRM reads it when the click itself was not recorded (blocked script, refused cookies);
+a recorded click always wins, with its full detail.
+
 ### Personal data
 
 - The free-text message of a form is never sent (it may hold health data; the CRM

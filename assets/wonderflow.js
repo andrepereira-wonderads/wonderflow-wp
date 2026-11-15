@@ -167,12 +167,52 @@
 
   // ---- WhatsApp ------------------------------------------------------------
 
-  function newRef() {
+  /** 5 characters: the channel letter (or a random one), then 4 random. */
+  function newRef(prefix) {
     var bytes = new Uint8Array(5);
     (window.crypto || window.msCrypto).getRandomValues(bytes);
-    var ref = "";
-    for (var i = 0; i < 5; i++) ref += REF_ALPHABET.charAt(bytes[i] % REF_ALPHABET.length);
+    var ref = prefix || REF_ALPHABET.charAt(bytes[0] % REF_ALPHABET.length);
+    for (var i = 1; i < 5; i++) ref += REF_ALPHABET.charAt(bytes[i] % REF_ALPHABET.length);
     return ref;
+  }
+
+  // ---- channel letter of the Ref ---------------------------------------------
+  // The first character of the Ref tells the CRM the channel even when the
+  // click itself is not recorded. Same rules as public.classify_channel:
+  //   D direct  G organic search  P paid search  R organic social  M paid social
+  //   A AI assistant  E email  W referral (other site)  X other
+
+  var SOCIAL_SOURCES = ["facebook", "fb", "instagram", "ig", "meta", "tiktok", "linkedin", "pinterest", "youtube", "x", "twitter"];
+  var PAID_MEDIA = ["cpc", "ppc", "paid", "paidsearch", "paid_search", "paidsocial", "paid_social", "cpm", "display"];
+  var AI_HOSTS = /(^|\.)(chatgpt\.com|chat\.openai\.com|perplexity\.ai|gemini\.google\.com|copilot\.microsoft\.com|claude\.ai)$/;
+  var AI_SOURCES = /^(chatgpt(\.com)?|chat\.openai\.com|openai|perplexity(\.ai)?|gemini(\.google\.com)?|copilot(\.microsoft\.com)?|claude(\.ai)?)$/;
+  var SEARCH_HOSTS = /(^|\.)(google|bing|duckduckgo|yahoo|ecosia)\./;
+  var SOCIAL_HOSTS = /(^|\.)(facebook\.com|instagram\.com|t\.co|linkedin\.com|lnkd\.in|tiktok\.com|youtube\.com|x\.com|twitter\.com|pinterest\.com)$/;
+
+  function hostOf(url) {
+    try {
+      return url ? new URL(url).hostname.toLowerCase() : "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function channelLetter(touch) {
+    if (!touch) return "D";
+    var source = String(touch.utm_source || "").trim().toLowerCase();
+    var medium = String(touch.utm_medium || "").trim().toLowerCase();
+    var referrer = hostOf(touch.referrer);
+    if (referrer && referrer === hostOf(touch.landing_page)) referrer = "";
+    if (touch.gclid || touch.gbraid || touch.wbraid || touch.msclkid) return "P";
+    if (medium === "email" || medium === "e-mail" || medium === "newsletter") return "E";
+    if (PAID_MEDIA.indexOf(medium) >= 0) return SOCIAL_SOURCES.indexOf(source) >= 0 ? "M" : "P";
+    if (touch.fbclid) return "M";
+    if (AI_HOSTS.test(referrer) || AI_SOURCES.test(source)) return "A";
+    if (medium === "organic" || SEARCH_HOSTS.test(referrer)) return "G";
+    if (medium === "social" || SOCIAL_HOSTS.test(referrer)) return "R";
+    if (referrer) return "W";
+    if (!source && !medium) return "D";
+    return "X";
   }
 
   /** Parsed WhatsApp chat URL, or null. Group invites (chat.whatsapp.com) are left alone. */
@@ -208,7 +248,9 @@
     if (!whatsapp.enabled) return href;
     var parsed = parseWhatsapp(href);
     if (!parsed || !isClinicNumber(parsed.phone)) return href;
-    var ref = newRef();
+    // The origin in memory is enough for one letter, even without consent to
+    // store it: nothing is saved, and the visitor sends the message themselves.
+    var ref = newRef(channelLetter(touches().first || current.touch));
     var text = (parsed.url.searchParams.get("text") || "").replace(TRAILING_REF, "");
     var message = text ? text + " Ref " + ref : String(whatsapp.message || "Ref {ref}").replace("{ref}", ref);
     parsed.url.searchParams.set("text", message);
