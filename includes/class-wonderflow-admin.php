@@ -21,6 +21,7 @@ class Wonderflow_Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'register' ) );
 		add_action( 'admin_post_wonderflow_test', array( __CLASS__, 'handle_test' ) );
+		add_action( 'admin_post_wonderflow_send_now', array( __CLASS__, 'handle_send_now' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( WONDERFLOW_FILE ), array( __CLASS__, 'action_links' ) );
 	}
 
@@ -66,6 +67,20 @@ class Wonderflow_Admin {
 		}
 		check_admin_referer( 'wonderflow_test' );
 		set_transient( 'wonderflow_test_result', Wonderflow_Client::test_connection(), MINUTE_IN_SECONDS );
+		wp_safe_redirect( admin_url( 'options-general.php?page=' . self::SLUG ) );
+		exit;
+	}
+
+	/**
+	 * "Send now" button: sends the waiting rows in this request.
+	 */
+	public static function handle_send_now() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Not allowed.', 'wonderflow' ) );
+		}
+		check_admin_referer( 'wonderflow_send_now' );
+		delete_transient( 'wonderflow_queue_lock' );
+		Wonderflow_Queue::process( true );
 		wp_safe_redirect( admin_url( 'options-general.php?page=' . self::SLUG ) );
 		exit;
 	}
@@ -185,6 +200,13 @@ class Wonderflow_Admin {
 
 			<h2><?php esc_html_e( 'Latest sends', 'wonderflow' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'Status only, kept for 30 days. Personal data is deleted from this site as soon as a send is settled.', 'wonderflow' ); ?></p>
+			<?php if ( Wonderflow_Queue::pending_count() > 0 ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="wonderflow_send_now" />
+					<?php wp_nonce_field( 'wonderflow_send_now' ); ?>
+					<?php submit_button( __( 'Send now', 'wonderflow' ), 'secondary', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
 			<?php self::render_log(); ?>
 		</div>
 		<?php

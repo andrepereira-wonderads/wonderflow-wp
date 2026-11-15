@@ -139,13 +139,47 @@ class Wonderflow_Queue {
 		if ( ! wp_next_scheduled( self::CRON_HOOK . '_now' ) ) {
 			wp_schedule_single_event( time(), self::CRON_HOOK . '_now' );
 		}
+		// Send in this request, after the response: WP-Cron only runs on visits
+		// and is often late or disabled on hosts with page caching.
+		if ( ! has_action( 'shutdown', array( __CLASS__, 'process_after_response' ) ) ) {
+			add_action( 'shutdown', array( __CLASS__, 'process_after_response' ), 100 );
+		}
 		return (int) $wpdb->insert_id;
 	}
 
 	/**
-	 * Sends the due rows.
+	 * Closes the connection with the visitor first (PHP-FPM, LiteSpeed), then
+	 * sends. Without that, the send is left to WP-Cron so nobody waits.
 	 */
-	public static function process() {
+	public static function process_after_response() {
+		if ( function_exists( 'fastcgi_finish_request' ) ) {
+			fastcgi_finish_request();
+		} elseif ( function_exists( 'litespeed_finish_request' ) ) {
+			litespeed_finish_request();
+		} else {
+			return;
+		}
+		self::process();
+	}
+
+	/**
+	 * Number of rows waiting to be sent.
+	 *
+	 * @return int
+	 */
+	public static function pending_count() {
+		global $wpdb;
+		$table = self::table();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'pending'" );
+	}
+
+	/**
+	 * Sends the due rows.
+	 *
+	 * @param bool $force Also send rows waiting for a retry ("Send now").
+	 */
+	public static function process( $force = false ) {
 		global $wpdb;
 		if ( ! Wonderflow_Settings::is_connected() ) {
 			return;
@@ -157,7 +191,7 @@ class Wonderflow_Queue {
 
 		$table = self::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, kind, idempotency_key, payload, attempts FROM {$table} WHERE status = 'pending' AND next_attempt_at <= %s ORDER BY id LIMIT %d", current_time( 'mysql', true ), self::BATCH ) );
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, kind, idempotency_key, payload, attempts FROM {$table} WHERE status = 'pending' AND next_attempt_at <= %s ORDER BY id LIMIT %d", $force ? '9999-12-31 00:00:00' : current_time( 'mysql', true ), self::BATCH ) );
 
 		foreach ( (array) $rows as $row ) {
 			$payload = json_decode( (string) $row->payload, true );

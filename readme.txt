@@ -4,7 +4,7 @@ Tags: crm, leads, forms, whatsapp, attribution
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,6 +24,10 @@ Sends the clinic website's forms and WhatsApp clicks to the Wonderflow CRM, with
 3. Click "Test connection", then turn on forms and / or WhatsApp tracking.
 
 == Changelog ==
+
+= 0.1.1 =
+* Send right after the response to the visitor instead of waiting for WP-Cron (which only runs on visits and is often late or disabled).
+* "Send now" button for waiting sends.
 
 = 0.1.0 =
 * First version.

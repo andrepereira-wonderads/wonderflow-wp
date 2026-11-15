@@ -32,6 +32,7 @@ return array(
 		'Saved (leave empty to keep it)' => 'Guardada (deixe vazio para a manter)',
 		'Send Elementor Pro, Contact Form 7, WPForms, Gravity Forms and Fluent Forms submissions to the CRM' => 'Enviar para o CRM os formulários do Elementor Pro, Contact Form 7, WPForms, Gravity Forms e Fluent Forms',
 		'Send forms' => 'Enviar formulários',
+		'Send now' => 'Enviar agora',
 		'Sent' => 'Enviado',
 		'Server key' => 'Chave de servidor',
 		'Settings' => 'Definições',
